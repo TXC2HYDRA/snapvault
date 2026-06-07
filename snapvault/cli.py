@@ -2,6 +2,7 @@ from pathlib import Path
 
 import click
 from .snapshot import backup
+from .snapshot import restore
 
 
 @click.group()
@@ -28,3 +29,14 @@ def backup_cmd(source: Path, repo_path: Path, tag: str | None) -> None:
     """Create a backup snapshot of SOURCE into REPO_PATH."""
     snap_id = backup(source, repo_path, tag)
     click.echo(f"Created snapshot {snap_id}")
+
+
+
+@main.command()
+@click.argument("snapshot_id", type=int)
+@click.argument("target", type=click.Path(file_okay=True, dir_okay=True, path_type=Path))
+@click.argument("repo_path", type=click.Path(file_okay=False, dir_okay=True, writable=True, path_type=Path))
+def restore_cmd(snapshot_id: int, target: Path, repo_path: Path) -> None:
+    """Restore snapshot SNAPSHOT_ID into TARGET directory from REPO_PATH."""
+    restore(snapshot_id, target, repo_path)
+    click.echo(f"Restored snapshot {snapshot_id} to {target}")

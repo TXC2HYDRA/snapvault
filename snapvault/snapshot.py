@@ -39,3 +39,24 @@ def backup(source: Path, repo_path: Path, tag: str | None = None) -> int:
 
     catalog.close()
     return snap.id
+
+
+def restore(snapshot_id: int, target: Path, repo_path: Path) -> None:
+    """Restore snapshot `snapshot_id` from `repo_path` into `target` directory."""
+    repo_path = Path(repo_path)
+    target = Path(target)
+
+    backend = LocalFilesystemBackend(repo_path)
+    catalog = Catalog(repo_path)
+
+    files = catalog.get_snapshot_files(snapshot_id)
+    for file_id, rel_path, size in files:
+        out_path = target / Path(rel_path)
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        with out_path.open("wb") as fh:
+            chunks = catalog.get_file_chunks(file_id)
+            for _, chunk_id, _ in chunks:
+                chunk_bytes = backend.get_chunk(chunk_id)
+                fh.write(chunk_bytes)
+
+    catalog.close()
